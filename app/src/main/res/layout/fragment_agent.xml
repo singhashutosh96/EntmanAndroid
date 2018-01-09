@@ -6,6 +6,11 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerview"
         android:layout_width="match_parent"
@@ -14,18 +19,20 @@
         android:paddingBottom="5dp"
         android:clipToPadding="false"
         android:clipChildren="false"
-        tools:listitem="@layout/recycler_layout"/>
+        tools:listitem="@layout/layout_recycler"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
-    <android.support.design.widget.FloatingActionButton
+    <com.example.ahs.entman.Classes.ActionButton
         android:id="@+id/agentFab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_marginBottom="155dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginRight="30dp"
         android:layout_marginEnd="16dp"
-        android:tint="#9f90af"
-        android:src="@drawable/ic_new_agent"
-        app:backgroundTint="#605271"/>
+        android:src="@drawable/ic_add"
+        app:backgroundTint="#605271" />
+
+
 
 </FrameLayout>

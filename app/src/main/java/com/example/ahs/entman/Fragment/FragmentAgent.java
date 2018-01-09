@@ -1,9 +1,10 @@
 package com.example.ahs.entman.Fragment;
 
+import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -23,9 +23,14 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.dx.dxloadingbutton.lib.LoadingButton;
 import com.example.ahs.entman.Adapter.AgentAdapter;
+import com.example.ahs.entman.Classes.ActionButton;
 import com.example.ahs.entman.Instance.Add_Agent_Instance;
 import com.example.ahs.entman.Model.Agent;
 import com.example.ahs.entman.R;
+import com.shashank.sony.fancydialoglib.Animation;
+import com.shashank.sony.fancydialoglib.FancyAlertDialog;
+import com.shashank.sony.fancydialoglib.FancyAlertDialogListener;
+import com.shashank.sony.fancydialoglib.Icon;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,20 +52,33 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
     List<Agent> agentList;
     AlertDialog dialog;
     private static final String Agent_URL = "http://tcetminiproject.000webhostapp.com/agent_list_retrive.php";
-    FloatingActionButton agentFab;
+    ActionButton agentFab;
     LoadingButton detail_submit;
+    SwipeRefreshLayout swipeRefreshLayout;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_agent, container, false);
 
-
-        agentFab =(FloatingActionButton)v.findViewById(R.id.agentFab);
+        swipeRefreshLayout = v.findViewById(R.id.swipeRefreshLayout);
+        agentFab = v.findViewById(R.id.agentFab);
         agentList = new ArrayList<>();
 
-        recyclerView = (RecyclerView) v.findViewById(R.id.recyclerview);
+        recyclerView = v.findViewById(R.id.recyclerview);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+               // getFragmentManager().beginTransaction().replace(R.id.viewPager,FragmentAgent.newInstance()).commit();
+                agentList.clear();
+                loadAgents();
+               // recyclerView.setAdapter(new AgentAdapter(agentList));
+                // recyclerView.invalidate();
+            }
+        });
 
         loadAgents();
 
@@ -73,16 +91,13 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
             }
         });
 
+
+
         return v;
-
-
-
-
 
     }
 
     private void createAgent() {
-
 
                 final AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
                 View mView = getLayoutInflater().inflate(R.layout.dialog_create_agent,null);
@@ -91,7 +106,6 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                 final EditText agent_email = (EditText) mView.findViewById(R.id.et_agent_email);
                 detail_submit = (LoadingButton) mView.findViewById(R.id.btn_submit_details);
                 final String server_url = "http://tcetminiproject.000webhostapp.com/agent_create.php";
-
 
                 detail_submit.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -112,6 +126,11 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                                     new Response.Listener<String>() {
                                         @Override
                                         public void onResponse(String response) {
+
+                                            Toast.makeText(getActivity(),"Agent Added Successfully",Toast.LENGTH_LONG).show();
+                                            dialog.dismiss();
+                                            agentList.clear();
+                                            loadAgents();
 
                                         }
                                     },
@@ -137,8 +156,7 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                             };
 
                             Add_Agent_Instance.getInstance(getActivity()).addToRequestQue(stringRequest);
-                            Toast.makeText(getActivity(),"Agent Added Successfully",Toast.LENGTH_LONG).show();
-                            dialog.dismiss();
+
                             //  recreate();
 
                         }
@@ -172,8 +190,12 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                                 agentList.add(agent);
                             }
 
-                            adapter = new AgentAdapter(getActivity(),agentList,FragmentAgent.this);
-                            recyclerView.setAdapter(adapter);
+                            if(adapter==null){
+                                adapter = new AgentAdapter(getActivity(),agentList,FragmentAgent.this);
+                                recyclerView.setAdapter(adapter);}
+                            else{
+                                adapter.notifyDataSetChanged();
+                            }
 
 
                         } catch (JSONException e) {
@@ -194,53 +216,81 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
 
         Volley.newRequestQueue(getActivity()).add(stringRequest);
 
-    }
-
-    @Override
-    public void onDeleteClicked(String agent_id) {
-        Toast.makeText(getActivity(),"Deleted",Toast.LENGTH_SHORT).show();
-        final String delete_url = "http://tcetminiproject.000webhostapp.com/agent_delete.php";
-        final String id = agent_id;
-
-        StringRequest update_info = new StringRequest(Request.Method.POST, delete_url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-
-                        Toast.makeText(getActivity(),"Delete Successful",Toast.LENGTH_SHORT).show();
-
-                    }
-                },
-
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                        Toast.makeText(getActivity(),"Error...",Toast.LENGTH_LONG).show();
-                        error.printStackTrace();
-
-
-                    }
-                }){
-
-            @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
-
-                Map<String,String> params = new HashMap<String, String>();
-                params.put("id",id);
-                return params;
-            }
-        };
-
-        Add_Agent_Instance.getInstance(getActivity()).addToRequestQue(update_info);
-   //     recreate();
-
-
+       swipeRefreshLayout.setRefreshing(false);
 
     }
 
     @Override
-    public void onUpdateClicked(final String id, String name, String phone, String email) {
+    public void onDeleteClicked(final String agent_id, final  int position) {
+
+
+
+        new FancyAlertDialog.Builder(getActivity())
+                .setTitle("Delete")
+                .setBackgroundColor(Color.parseColor("#BD2031"))  //Don't pass R.color.colorvalue
+                .setMessage("Do you really want to Delete?")
+                .setNegativeBtnText("Cancel")
+                .setPositiveBtnBackground(Color.parseColor("#BD2031"))  //Don't pass R.color.colorvalue
+                .setPositiveBtnText("Delete")
+                .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                .setAnimation(Animation.POP)
+                .isCancellable(true)
+                .setIcon(R.drawable.ic_close_cross, Icon.Visible)
+                .OnPositiveClicked(new FancyAlertDialogListener() {
+                    @Override
+                    public void OnClick() {
+
+                        final String delete_url = "http://tcetminiproject.000webhostapp.com/agent_delete.php";
+                        final String id = agent_id;
+
+                        StringRequest update_info = new StringRequest(Request.Method.POST, delete_url,
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+
+                                        Toast.makeText(getActivity(),"Agent Deleted",Toast.LENGTH_SHORT).show();
+
+                                    }
+                                },
+
+                                new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+
+                                        Toast.makeText(getActivity(),"Error...",Toast.LENGTH_LONG).show();
+                                        error.printStackTrace();
+
+
+                                    }
+                                }){
+
+                            @Override
+                            protected Map<String, String> getParams() throws AuthFailureError {
+
+                                Map<String,String> params = new HashMap<String, String>();
+                                params.put("id",id);
+                                return params;
+                            }
+                        };
+
+                        Add_Agent_Instance.getInstance(getActivity()).addToRequestQue(update_info);
+
+                    }
+                })
+                .OnNegativeClicked(new FancyAlertDialogListener() {
+                    @Override
+                    public void OnClick() {
+                        Toast.makeText(getActivity(),"Cancel",Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .build();
+    }
+
+
+    @Override
+    public void onUpdateClicked(final String id, String name, String phone, String email,final int position) {
+
+
 
         final AlertDialog.Builder mBuilder = new AlertDialog.Builder(getActivity());
         View mView = getLayoutInflater().inflate(R.layout.dialog_create_agent,null);
@@ -250,7 +300,7 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
         agent_phone.setText(phone);
         final EditText agent_email = mView.findViewById(R.id.et_agent_email);
         agent_email.setText(email);
-        Button detail_submit = (Button) mView.findViewById(R.id.btn_submit_details);
+        detail_submit = mView.findViewById(R.id.btn_submit_details);
         final String server_url = "http://tcetminiproject.000webhostapp.com/agent_update.php";
 
 
@@ -273,6 +323,7 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                                 @Override
                                 public void onResponse(String response) {
 
+                                    dialog.dismiss();
                                     Toast.makeText(getContext(),"Update Successful",Toast.LENGTH_LONG).show();
 
                                 }
@@ -300,19 +351,79 @@ public class FragmentAgent extends Fragment implements AgentAdapter.OnDeleteClik
                     };
 
                     Add_Agent_Instance.getInstance(getContext()).addToRequestQue(update_Request);
-                    dialog.dismiss();
                     //recreate();
 
                 }
             }});
 
         mBuilder.setView(mView);
-        dialog = mBuilder.create();
+        dialog = mBuilder
+                .setNegativeButton("Close", null)
+                .setCancelable(false)
+                .create();
+
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(final DialogInterface dialog) {
+
+
+                Button button = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View view) {
+                        // TODO Do something
+
+                        //Dismiss once everything is OK.
+                        dialog.dismiss();
+                    }
+                });
+
+            }
+        });
+
         dialog.show();
 
+        /*
 
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(final DialogInterface dialog) {
+                //do whatever you want the back key to do
+                Toast.makeText(getContext(),"Back",Toast.LENGTH_LONG).show();
+
+                new FancyAlertDialog.Builder(getActivity())
+                        .setTitle("Discard the Changes ?")
+                        .setBackgroundColor(Color.parseColor("#303F9F"))  //Don't pass R.color.colorvalue
+                        .setNegativeBtnText("Cancel")
+                        .setPositiveBtnBackground(Color.parseColor("#FF4081"))  //Don't pass R.color.colorvalue
+                        .setPositiveBtnText("Discard")
+                        .setNegativeBtnBackground(Color.parseColor("#FFA9A7A8"))  //Don't pass R.color.colorvalue
+                        .setAnimation(Animation.POP)
+                        .isCancellable(true)
+                        .setIcon(R.drawable.ic_star_border_black_24dp,Icon.Visible)
+                        .OnPositiveClicked(new FancyAlertDialogListener() {
+                            @Override
+                            public void OnClick() {
+                                Toast.makeText(getActivity(),"Discard",Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            }
+                        })
+                        .OnNegativeClicked(new FancyAlertDialogListener() {
+                            @Override
+                            public void OnClick() {
+                                Toast.makeText(getActivity(),"Cancel",Toast.LENGTH_SHORT).show();
+
+                            }
+                        })
+                        .build();
+            }
+        });
+*/
 
     }
+
 
     public static FragmentAgent newInstance() {
 

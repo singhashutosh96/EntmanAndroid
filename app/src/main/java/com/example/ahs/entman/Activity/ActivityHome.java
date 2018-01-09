@@ -30,6 +30,7 @@ public class ActivityHome extends FragmentActivity {
 
         pager = (ViewPager) findViewById(R.id.viewPager);
         pager.setAdapter(new MyPagerAdapter(getSupportFragmentManager()));
+        pager.setOffscreenPageLimit(4);
 
         initUI();
     }
@@ -71,14 +72,14 @@ public class ActivityHome extends FragmentActivity {
         final ArrayList<NavigationTabBar.Model> models = new ArrayList<>();
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_agent),
+                        getResources().getDrawable(R.drawable.ic_profile),
                         Color.parseColor(colors[0]))
                         .title("Heart")
                         .build()
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_agent),
+                        getResources().getDrawable(R.drawable.ic_task),
                         Color.parseColor(colors[1]))
                         .title("Cup")
                         .build()
@@ -92,7 +93,7 @@ public class ActivityHome extends FragmentActivity {
         );
         models.add(
                 new NavigationTabBar.Model.Builder(
-                        getResources().getDrawable(R.drawable.ic_agent),
+                        getResources().getDrawable(R.drawable.ic_inventory),
                         Color.parseColor(colors[3]))
                         .title("Flag")
                         .build()
